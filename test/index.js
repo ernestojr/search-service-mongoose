@@ -22,13 +22,13 @@ describe('Search Service Mongoose Test', () => {
     SearchService.search(Owner, {}, query)
     .then(owners => {
       console.log('Owners', owners)
-      expect(owners).to.have.deep.property('collection')
-      owners.map(owner => {
-        expect(owner).to.have.deep.property('firstName')
-        expect(owner).to.have.deep.property('lastName')
-        expect(owner).to.have.deep.property('address')
+      expect(owners).to.have.property('collection')
+      owners.collection.map(owner => {
+        expect(owner).to.have.property('firstName')
+        expect(owner).to.have.property('lastName')
+        expect(owner).to.have.property('address')
       })
-      expect(owners).to.have.deep.property('pagination')
+      expect(owners).to.have.property('pagination')
     })
     .catch(err => console.error('Owners', err))
   })
@@ -41,13 +41,13 @@ describe('Search Service Mongoose Test', () => {
     SearchService.search(Vet, {}, query)
     .then(vets => {
       console.log('Vets', vets)
-      expect(vets).to.have.deep.property('collection')
-      vets.map(vet => {
-        expect(vet).to.have.deep.property('firstName')
-        expect(vet).to.have.deep.property('lastName')
-        expect(vet).to.have.deep.property('clients')
+      expect(vets).to.have.property('collection')
+      vets.collection.map(vet => {
+        expect(vet).to.have.property('firstName')
+        expect(vet).to.have.property('lastName')
+        expect(vet).to.have.property('clients')
       })
-      expect(vets).to.have.deep.property('pagination')
+      expect(vets).to.have.property('pagination')
     })
     .catch(err => console.error('Vets', err))
   })
@@ -60,14 +60,14 @@ describe('Search Service Mongoose Test', () => {
     SearchService.search(Cat, {}, query)
     .then(cats => {
       console.log('Cats', cats)
-      expect(cats).to.have.deep.property('collection')
-      cats.map(cat => {
-        expect(cat).to.have.deep.property('name')
-        expect(cat).to.have.deep.property('months')
-        expect(cat).to.have.deep.property('owner')
-        expect(cat).to.have.deep.property('vet')
+      expect(cats).to.have.property('collection')
+      cats.collection.map(cat => {
+        expect(cat).to.have.property('name')
+        expect(cat).to.have.property('months')
+        expect(cat).to.have.property('owner')
+        expect(cat).to.have.property('vet')
       })
-      expect(cats).to.have.deep.property('pagination')
+      expect(cats).to.have.property('pagination')
     })
     .catch(err => console.error('Cats', err))
   })
@@ -109,8 +109,7 @@ function createModelsAndDocuments(next) {
 
   Promise.all(promises)
   .then(owners => {
-    console.log('owners', owners)
-    const promises = owners.collection.map(owner => Vet.create({
+    const promises = owners.map(owner => Vet.create({
       firstName: fakerator.names.firstName(),
       lastName: fakerator.names.lastName(),
       clients: [owner._id]
@@ -118,23 +117,21 @@ function createModelsAndDocuments(next) {
     return Promise.all([owners, Promise.all(promises)])
   })
   .then(([owners, vets]) => {
-    console.log('vets', vets)
-    const promises = owners.collection.map((owner, index) => Cat.create({
+    const promises = owners.map((owner, index) => Cat.create({
       name: fakerator.names.name(),
       months: fakerator.random.number(12),
       owner: owner._id,
-      vet: vets.collection[index]._id,
+      vet: vets[index]._id,
     }))
     return Promise.all(promises)
   })
   .then(cats => {
-    console.log('cats', cats)
     next()
   })
   .catch(err => console.log(err))
 }
 
-function functionName(next) {
+function deleteDocuments(next) {
   Cat.remove({})
   .then(() => Vet.remove({}))
   .then(() => Owner.remove({}))

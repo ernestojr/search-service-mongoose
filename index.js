@@ -8,8 +8,8 @@ module.exports = class SearchService {
       getCollection(model, criteria, opts)
       .then(collection => setPopulations(model, collection, params))
       .then(collection => {
-        const pagiation = buildHeaders(collection, params)
-        resolve({ collection, pagiation })
+        const pagination = buildHeaders(collection, params)
+        resolve({ collection, pagination })
       })
       .catch(err => reject)
     })
