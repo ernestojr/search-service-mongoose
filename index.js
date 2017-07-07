@@ -14,6 +14,17 @@ module.exports = class SearchService {
       .catch(err => reject)
     })
   }
+  static searchOne(model, criteria = {}, params = {}) {
+    return new Promise((resolve, reject) => {
+      const fields = buidFields(params.fields, true)
+      model.findOne(criteria, fields)
+      .then(document => setPopulations(model, document, params))
+      .then(document => {
+        resolve(document)
+      })
+      .catch(err => reject)
+    })
+  }
 }
 
 function normalizeParams(params) {
@@ -54,14 +65,14 @@ function buildSkip(page, limit) {
   return { $skip: skip }
 }
 
-function buidFields(fields) {
+function buidFields(fields, isEase = false) {
   if (!fields) return null
   fields = fields.split(',')
   fields = fields.reduce((result, field) => {
     result[field.trim()] = 1
     return result
   }, {})
-  return { $project: fields }
+  return isEase ? fields : { $project: fields }
 }
 
 function getCollection(model, criteria, opts) {
