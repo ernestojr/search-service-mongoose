@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const SearchService = require('../index.js')
 const expect = require('chai').expect
 
-let Owner, Vet, Cat
+let Owner, Vet, Cat, catId
 
 const fakerator = Fakerator("es-ES")
 mongoose.Promise = global.Promise
@@ -21,7 +21,7 @@ describe('Search Service Mongoose Test', () => {
     }
     SearchService.search(Owner, {}, query)
     .then(owners => {
-      console.log('Owners', owners)
+      // console.log('Owners', owners)
       expect(owners).to.have.property('collection')
       owners.collection.map(owner => {
         expect(owner).to.have.property('firstName')
@@ -32,6 +32,7 @@ describe('Search Service Mongoose Test', () => {
     })
     .catch(err => console.error('Owners', err))
   })
+
   it('Should get vets in db', () => {
     const query = {
       uri: 'uri to resource',
@@ -40,7 +41,7 @@ describe('Search Service Mongoose Test', () => {
     }
     SearchService.search(Vet, {}, query)
     .then(vets => {
-      console.log('Vets', vets)
+      // console.log('Vets', vets)
       expect(vets).to.have.property('collection')
       vets.collection.map(vet => {
         expect(vet).to.have.property('firstName')
@@ -51,6 +52,7 @@ describe('Search Service Mongoose Test', () => {
     })
     .catch(err => console.error('Vets', err))
   })
+
   it('Should get cats in db', () => {
     const query = {
       uri: 'uri to resource',
@@ -59,7 +61,7 @@ describe('Search Service Mongoose Test', () => {
     }
     SearchService.search(Cat, {}, query)
     .then(cats => {
-      console.log('Cats', cats)
+      // console.log('Cats', cats)
       expect(cats).to.have.property('collection')
       cats.collection.map(cat => {
         expect(cat).to.have.property('name')
@@ -70,6 +72,22 @@ describe('Search Service Mongoose Test', () => {
       expect(cats).to.have.property('pagination')
     })
     .catch(err => console.error('Cats', err))
+  })
+
+  it('Should get cats by id in db', () => {
+    const query = {
+      fields: 'name, months, owner, vet',
+      populations: 'owner vet'
+    }
+    SearchService.searchOne(Cat, { _id: catId }, query)
+    .then(cat => {
+      // console.log('Cat', cat)
+      expect(cat).to.have.property('name')
+      expect(cat).to.have.property('months')
+      expect(cat).to.have.property('owner')
+      expect(cat).to.have.property('vet')
+    })
+    .catch(err => console.error('Cat', err))
   })
 
 })
@@ -126,6 +144,7 @@ function createModelsAndDocuments(next) {
     return Promise.all(promises)
   })
   .then(cats => {
+    catId = cats[0]._id
     next()
   })
   .catch(err => console.log(err))
