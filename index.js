@@ -19,9 +19,7 @@ module.exports = class SearchService {
       const fields = buidFields(params.fields, true)
       model.findOne(criteria, fields)
       .then(document => setPopulations(model, document, params))
-      .then(document => {
-        resolve(document)
-      })
+      .then(resolve)
       .catch(err => reject)
     })
   }
@@ -35,15 +33,19 @@ function normalizeParams(params) {
     orderBy = '-_id',
     fields = null,
     populations = null,
+    all = false
   } = params
-  return { uri, page, limit, orderBy, fields, populations }
+  return { uri, page, limit, orderBy, fields, populations, all }
 }
 
-function buildOptions({ page, limit, orderBy, fields }) {
+function buildOptions({ page, limit, orderBy, fields, all }) {
   orderBy = buildCriteriaOrder(orderBy)
+  fields = buidFields(fields)
+  if (all) {
+    return { fields, orderBy }
+  }
   const skip = buildSkip(page, limit)
   limit = { $limit: limit }
-  fields = buidFields(fields)
   return { fields, skip, limit, orderBy }
 }
 
@@ -79,10 +81,11 @@ function getCollection(model, criteria, opts) {
   const { fields, skip, limit, orderBy } = opts
   const query = [
     { $match: criteria },
-    orderBy,
-    skip,
-    limit,
+    orderBy
   ]
+  if (skip && limit) {
+    query.push(skip, limit)
+  }
   if (fields) query.push(fields)
   return model.aggregate(query)
 }
