@@ -7,10 +7,8 @@ module.exports = class SearchService {
       const opts = buildOptions(params)
       getCollection(model, criteria, opts)
       .then(collection => setPopulations(model, collection, params))
-      .then(collection => {
-        const pagination = buildHeaders(collection, params)
-        resolve({ collection, pagination })
-      })
+      .then(collection => Promise.all([collection, buildHeaders(model, criteria, params)]))
+      .then(([collection, pagination]) => resolve({ collection, pagination }))
       .catch(err => reject)
     })
   }
@@ -35,7 +33,15 @@ function normalizeParams(params) {
     populations = null,
     all = false
   } = params
-  return { uri, page, limit, orderBy, fields, populations, all }
+  return {
+    uri,
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+    orderBy,
+    fields,
+    populations,
+    all
+  }
 }
 
 function buildOptions({ page, limit, orderBy, fields, all }) {
@@ -97,22 +103,15 @@ function setPopulations(model, collection, { populations }) {
   return Promise.resolve(collection)
 }
 
-function buildHeaders(values, params) {
-  const { uri, page, limit, orderBy, fields } = params
-  const pagination = {
-    'X-Pagination-Total-Count': values.length,
-  }
-  const link = []
-  if (page > 1) {
-    const queryString = qs.stringify({ page: page - 1, limit, orderBy, fields })
-    const prevUrl = `${uri}?${queryString}`
-    link.push(`<${prevUrl}>; rel="prev"`)
-  }
-  if (values.length === limit) {
-    const queryString = qs.stringify({ page: page + 1, limit, orderBy, fields })
-    const nextUrl = `${uri}?${queryString}`
-    link.push(`<${nextUrl}>; rel="next"`)
-  }
-  pagination['Link'] = link.toString()
-  return pagination
+function buildHeaders(model, criteria, { limit }) {
+  return new Promise((resolve, reject) => {
+    model.count(criteria)
+    .then(count => {
+      resolve({
+        'X-Pagination-Total-Count': count,
+        'X-Pagination-Limit': limit,
+      })
+    })
+    .catch(reject)
+  })
 }
