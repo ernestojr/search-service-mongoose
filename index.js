@@ -6,9 +6,7 @@ module.exports = class SearchService {
       params = normalizeParams(params)
       const opts = buildOptions(params)
       getCollection(model, criteria, opts)
-      .then(collection => {
-        return setPopulations(model, collection, params)
-      })
+      .then(collection => setPopulations(model, collection, params))
       .then(collection => Promise.all([collection, buildHeaders(model, criteria, params)]))
       .then(([collection, pagination]) => resolve({ collection, pagination }))
       .catch(err => reject)
@@ -91,7 +89,7 @@ function getCollection(model, criteria, opts) {
   const { fields, skip, limit, orderBy, isCriteriaPipeline } = opts
   let query
   if (isCriteriaPipeline) {
-    query = criteria
+    query = criteria.slice()
     query.push(orderBy)
   } else {
     query = [
@@ -113,15 +111,27 @@ function setPopulations(model, collection, { populations }) {
   return Promise.resolve(collection)
 }
 
-function buildHeaders(model, criteria, { limit }) {
+function buildHeaders(model, criteria, { limit, isCriteriaPipeline }) {
   return new Promise((resolve, reject) => {
-    model.count(criteria)
-    .then(count => {
-      resolve({
-        'X-Pagination-Total-Count': count,
-        'X-Pagination-Limit': limit,
+    if (!isCriteriaPipeline) {
+      model.count(criteria)
+      .then(count => {
+        resolve({
+          'X-Pagination-Total-Count': count,
+          'X-Pagination-Limit': limit,
+        })
       })
-    })
-    .catch(reject)
+      .catch(reject)
+    } else {
+      const pipeline = criteria.slice()
+      pipeline.push({ $count: 'count' })
+      model.aggregate(pipeline)
+      .then(result => {
+        resolve({
+          'X-Pagination-Total-Count': result[0].count,
+          'X-Pagination-Limit': limit,
+        })
+      })
+    }
   })
 }
