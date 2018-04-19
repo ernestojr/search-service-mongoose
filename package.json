@@ -1,6 +1,6 @@
 {
   "name": "search-service-mongoose",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "This module allows search documents paginated.",
   "main": "index.js",
   "scripts": {
