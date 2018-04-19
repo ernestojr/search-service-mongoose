@@ -115,6 +115,31 @@ describe('Search Service Mongoose Test', () => {
     .catch(err => console.error('Cat', err))
   })
 
+  it('Should get one cat by id in db with isCriteriaPipeline in true', () => {
+    const query = {
+      fields: 'name, months, owner, vet',
+      populations: 'owner vet',
+      isCriteriaPipeline: true,
+    }
+    const criteria = [
+      { $match: { _id:  mongoose.Types.ObjectId(catId) } }
+    ]
+    SearchService.search(Cat, criteria, query)
+    .then(result => {
+      expect(result).to.have.property('collection')
+      result.collection.map(cat => {
+        expect(cat).to.have.property('name')
+        expect(cat).to.have.property('months')
+        expect(cat).to.have.property('owner')
+        expect(cat).to.have.property('vet')
+      })
+      expect(result).to.have.property('pagination')
+      expect(result.pagination).to.have.property('X-Pagination-Total-Count')
+      expect(result.pagination).to.have.property('X-Pagination-Limit')
+    })
+    .catch(err => console.error('Cat', err))
+  })
+
 })
 
 function createModelsAndDocuments(next) {

@@ -6,7 +6,9 @@ module.exports = class SearchService {
       params = normalizeParams(params)
       const opts = buildOptions(params)
       getCollection(model, criteria, opts)
-      .then(collection => setPopulations(model, collection, params))
+      .then(collection => {
+        return setPopulations(model, collection, params)
+      })
       .then(collection => Promise.all([collection, buildHeaders(model, criteria, params)]))
       .then(([collection, pagination]) => resolve({ collection, pagination }))
       .catch(err => reject)
@@ -31,6 +33,7 @@ function normalizeParams(params) {
     orderBy = '-_id',
     fields = null,
     populations = null,
+    isCriteriaPipeline = false,
     all = false
   } = params
   return {
@@ -40,19 +43,20 @@ function normalizeParams(params) {
     orderBy,
     fields,
     populations,
+    isCriteriaPipeline,
     all
   }
 }
 
-function buildOptions({ page, limit, orderBy, fields, all }) {
+function buildOptions({ page, limit, orderBy, fields, all, isCriteriaPipeline }) {
   orderBy = buildCriteriaOrder(orderBy)
   fields = buidFields(fields)
   if (all) {
-    return { fields, orderBy }
+    return { fields, orderBy, isCriteriaPipeline }
   }
   const skip = buildSkip(page, limit)
   limit = { $limit: limit }
-  return { fields, skip, limit, orderBy }
+  return { fields, skip, limit, orderBy, isCriteriaPipeline }
 }
 
 function buildCriteriaOrder(orderBy) {
@@ -84,11 +88,17 @@ function buidFields(fields, isEase = false) {
 }
 
 function getCollection(model, criteria, opts) {
-  const { fields, skip, limit, orderBy } = opts
-  const query = [
-    { $match: criteria },
-    orderBy
-  ]
+  const { fields, skip, limit, orderBy, isCriteriaPipeline } = opts
+  let query
+  if (isCriteriaPipeline) {
+    query = criteria
+    query.push(orderBy)
+  } else {
+    query = [
+      { $match: criteria },
+      orderBy
+    ]
+  }
   if (skip && limit) {
     query.push(skip, limit)
   }
