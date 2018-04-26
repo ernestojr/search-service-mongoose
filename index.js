@@ -128,7 +128,7 @@ function buildHeaders(model, criteria, { limit, isCriteriaPipeline }) {
       model.aggregate(pipeline)
       .then(result => {
         resolve({
-          'X-Pagination-Total-Count': result[0].count,
+          'X-Pagination-Total-Count': result.length > 0 ? result[0].count : 0,
           'X-Pagination-Limit': limit,
         })
       })
