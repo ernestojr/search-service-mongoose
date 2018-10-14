@@ -1,24 +1,29 @@
-const qs = require('querystring')
+const reduce = require('lodash/reduce')
+const split = require('lodash/split')
+const join = require('lodash/join')
+const includes = require('lodash/includes')
+const map = require('lodash/map')
 
 module.exports = class SearchService {
   static search(model, criteria = {}, params = {}) {
     return new Promise((resolve, reject) => {
       params = normalizeParams(params)
+      const { all } = params
       const opts = buildOptions(params)
       getCollection(model, criteria, opts)
       .then(collection => setPopulations(model, collection, params))
-      .then(collection => Promise.all([collection, buildHeaders(model, criteria, params)]))
+      .then(collection => Promise.all([collection, all ? {} : buildHeaders(model, criteria, params)]))
       .then(([collection, pagination]) => resolve({ collection, pagination }))
-      .catch(err => reject)
+      .catch(reject)
     })
   }
   static searchOne(model, criteria = {}, params = {}) {
     return new Promise((resolve, reject) => {
-      const fields = buidFields(params.fields, true)
+      const fields = buidFields(params.fields, params.hiddenFields, true)
       model.findOne(criteria, fields)
       .then(document => setPopulations(model, document, params))
       .then(resolve)
-      .catch(err => reject)
+      .catch(reject)
     })
   }
 }
@@ -30,6 +35,7 @@ function normalizeParams(params) {
     limit = 10,
     orderBy = '-_id',
     fields = null,
+    hiddenFields = null,
     populations = null,
     isCriteriaPipeline = false,
     all = false
@@ -40,15 +46,16 @@ function normalizeParams(params) {
     limit: parseInt(limit, 10),
     orderBy,
     fields,
+    hiddenFields,
     populations,
     isCriteriaPipeline,
     all
   }
 }
 
-function buildOptions({ page, limit, orderBy, fields, all, isCriteriaPipeline }) {
+function buildOptions({ page, limit, orderBy, fields, hiddenFields, all, isCriteriaPipeline }) {
   orderBy = buildCriteriaOrder(orderBy)
-  fields = buidFields(fields)
+  fields = buidFields(fields, hiddenFields)
   if (all) {
     return { fields, orderBy, isCriteriaPipeline }
   }
@@ -75,14 +82,27 @@ function buildSkip(page, limit) {
   return { $skip: skip }
 }
 
-function buidFields(fields, isEase = false) {
+function buidFields(fields, hiddenFields, isEase = false) {
   if (!fields) return null
-  fields = fields.split(',')
+  fields = getFinalFields(fields, hiddenFields);
   fields = fields.reduce((result, field) => {
-    result[field.trim()] = 1
+    result[field] = 1
     return result
   }, {})
   return isEase ? fields : { $project: fields }
+}
+
+function getFinalFields(fields, hiddenFields) {
+  if (!fields) return null;
+  let allowedFields = map(split(fields, ','), field => field.trim());
+  if (!hiddenFields) return allowedFields;
+  const blockedFields = map(split(hiddenFields, ','), field => field.trim());
+  return reduce(allowedFields, (result, field) => {
+    if (!includes(blockedFields, field)) {
+      result.push(field);
+    }
+    return result;
+  }, []);
 }
 
 function getCollection(model, criteria, opts) {

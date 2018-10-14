@@ -94,25 +94,10 @@ describe('Search Service Mongoose Test', () => {
         expect(cat).to.have.property('vet')
       })
       expect(cats).to.have.property('pagination')
-      expect(cats.pagination).to.have.property('X-Pagination-Total-Count')
-      expect(cats.pagination).to.have.property('X-Pagination-Limit')
+      expect(cats.pagination).to.not.have.property('X-Pagination-Total-Count')
+      expect(cats.pagination).to.not.have.property('X-Pagination-Limit')
     })
     .catch(err => console.error('Cats', err))
-  })
-
-  it('Should get one cat by id in db', () => {
-    const query = {
-      fields: 'name, months, owner, vet',
-      populations: 'owner vet'
-    }
-    SearchService.searchOne(Cat, { _id: catId }, query)
-    .then(cat => {
-      expect(cat).to.have.property('name')
-      expect(cat).to.have.property('months')
-      expect(cat).to.have.property('owner')
-      expect(cat).to.have.property('vet')
-    })
-    .catch(err => console.error('Cat', err))
   })
 
   it('Should get one cat by id in db with isCriteriaPipeline in true', () => {
@@ -136,6 +121,23 @@ describe('Search Service Mongoose Test', () => {
       expect(result).to.have.property('pagination')
       expect(result.pagination).to.have.property('X-Pagination-Total-Count')
       expect(result.pagination).to.have.property('X-Pagination-Limit')
+    })
+    .catch(err => console.error('Cat', err))
+  })
+
+  it('Should get one cat by id with hidden fields in db', () => {
+    const query = {
+      fields: 'name, months, owner, vet',
+      hiddenFields: 'name',
+      populations: 'owner vet',
+    }
+    SearchService.searchOne(Cat, { _id: catId }, query)
+    .then(cat => {
+      cat = cat.toJSON()
+      expect(cat).to.not.have.property('name')
+      expect(cat).to.have.property('months')
+      expect(cat).to.have.property('owner')
+      expect(cat).to.have.property('vet')
     })
     .catch(err => console.error('Cat', err))
   })
