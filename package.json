@@ -1,6 +1,6 @@
 {
   "name": "search-service-mongoose",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "This module allows search documents paginated.",
   "main": "index.js",
   "scripts": {
@@ -11,10 +11,8 @@
   "license": "MIT",
   "devDependencies": {
     "chai": "^3.5.0",
-    "mocha-co": "1.17.1-co.1","babel-cli": "^6.24.1",
-    "babel-preset-es2015": "^6.24.1",
     "fakerator": "^0.3.0",
-    "nodemon": "^1.11.0",
+    "mocha-co": "1.17.1-co.1",
     "mongoose": "^4.10.6"
   },
   "repository": {
@@ -30,5 +28,8 @@
   "bugs": {
     "url": "https://github.com/ernestojr/search-service-mongoose/issues"
   },
-  "homepage": "https://github.com/ernestojr/search-service-mongoose"
+  "homepage": "https://github.com/ernestojr/search-service-mongoose",
+  "dependencies": {
+    "lodash": "^4.17.11"
+  }
 }
