@@ -125,10 +125,9 @@ describe('Search Service Mongoose Test', () => {
     .catch(err => console.error('Cat', err))
   })
 
-  it('Should get one cat by id with hidden fields in db', () => {
+  it('Should get one cat by id without field name in db', () => {
     const query = {
-      fields: 'name, months, owner, vet',
-      hiddenFields: 'name',
+      fields: '-name',
       populations: 'owner vet',
     }
     SearchService.searchOne(Cat, { _id: catId }, query)
