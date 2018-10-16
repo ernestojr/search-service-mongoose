@@ -1,7 +1,5 @@
-const reduce = require('lodash/reduce')
 const split = require('lodash/split')
 const startsWith = require('lodash/startsWith')
-const includes = require('lodash/includes')
 const map = require('lodash/map')
 
 module.exports = class SearchService {
@@ -83,7 +81,7 @@ function buildSkip(page, limit) {
 function buidFields(fields, isEase = false) {
   let allowedFields;
   if (!fields || typeof fields !== 'object' || typeof fields !== 'string') {
-    allowedFields = {};
+    allowedFields = null;
   }
   if (typeof fields === 'string') {
     allowedFields = map(split(fields, ','), field => field.trim());
@@ -124,7 +122,7 @@ function setPopulations(model, collection, { populations }) {
 function buildHeaders(model, criteria, { limit, isCriteriaPipeline }) {
   return new Promise((resolve, reject) => {
     if (!isCriteriaPipeline) {
-      model.count(criteria)
+      model.countDocuments(criteria)
       .then(count => {
         resolve({
           'X-Pagination-Total-Count': count,
