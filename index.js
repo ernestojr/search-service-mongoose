@@ -80,8 +80,8 @@ function buildSkip(page, limit) {
 
 function buidFields(fields, isEase = false) {
   let allowedFields;
-  if (!fields || typeof fields !== 'object' || typeof fields !== 'string') {
-    allowedFields = null;
+  if (!fields || (typeof fields !== 'object' && typeof fields !== 'string')) {
+    return null;
   }
   if (typeof fields === 'string') {
     allowedFields = map(split(fields, ','), field => field.trim());
@@ -90,6 +90,7 @@ function buidFields(fields, isEase = false) {
       return result;
     }, {});
   }
+  
   return isEase ? allowedFields : { $project: allowedFields };
 }
 
