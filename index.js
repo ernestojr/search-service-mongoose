@@ -49,15 +49,15 @@ function normalizeParams(params) {
   }
 }
 
-function buildOptions({ page, limit, orderBy, fields, all, isCriteriaPipeline }) {
+function buildOptions({ page, limit, orderBy, fields, all, isCriteriaPipeline, allowDiskUse }) {
   orderBy = buildCriteriaOrder(orderBy)
   fields = buidFields(fields)
   if (all) {
-    return { fields, orderBy, isCriteriaPipeline }
+    return { fields, orderBy, isCriteriaPipeline, allowDiskUse }
   }
   const skip = buildSkip(page, limit)
   limit = { $limit: limit }
-  return { fields, skip, limit, orderBy, isCriteriaPipeline }
+  return { fields, skip, limit, orderBy, isCriteriaPipeline, allowDiskUse }
 }
 
 function buildCriteriaOrder(orderBy) {
@@ -95,7 +95,7 @@ function buidFields(fields, isEase = false) {
 }
 
 function getCollection(model, criteria, opts) {
-  const { fields, skip, limit, orderBy, isCriteriaPipeline } = opts
+  const { fields, skip, limit, orderBy, isCriteriaPipeline, allowDiskUse } = opts
   let query
   if (isCriteriaPipeline) {
     query = criteria.slice()
@@ -110,7 +110,7 @@ function getCollection(model, criteria, opts) {
     query.push(skip, limit)
   }
   if (fields) query.push(fields)
-  return model.aggregate(query)
+  return allowDiskUse ? model.aggregate(query).allowDiskUse(true) : model.aggregate(query);
 }
 
 function setPopulations(model, collection, { populations }) {
