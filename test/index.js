@@ -7,7 +7,7 @@ let Owner, Vet, Cat, catId;
 
 const fakerator = Fakerator("es-ES");
 mongoose.Promise = global.Promise;
-const connection = mongoose.createConnection('mongodb://localhost/test', { promiseLibrary: global.Promise, useNewUrlParser: true });
+const connection = mongoose.createConnection('mongodb://localhost/test', { useNewUrlParser: true, useUnifiedTopology: true });
 
 describe('Search Service Mongoose Test', () => {
 
@@ -91,6 +91,29 @@ describe('Search Service Mongoose Test', () => {
       fields: 'name, months, owner, vet',
       populations: 'owner vet',
       isCriteriaPipeline: true,
+    };
+    const criteria = [
+      { $match: { _id:  mongoose.Types.ObjectId(catId) } }
+    ];
+    const result = await SearchService.search(Cat, criteria, query);
+    expect(result).to.have.property('collection');
+    result.collection.map(cat => {
+      expect(cat).to.have.property('name');
+      expect(cat).to.have.property('months');
+      expect(cat).to.have.property('owner');
+      expect(cat).to.have.property('vet');
+    });
+    expect(result).to.have.property('pagination');
+    expect(result.pagination).to.have.property('X-Pagination-Total-Count');
+    expect(result.pagination).to.have.property('X-Pagination-Limit');
+  });
+
+  it('Should get one cat by id in db with allowDiskUse in true', async () => {
+    const query = {
+      fields: 'name, months, owner, vet',
+      populations: 'owner vet',
+      isCriteriaPipeline: true,
+      allowDiskUse: true,
     };
     const criteria = [
       { $match: { _id:  mongoose.Types.ObjectId(catId) } }
